@@ -1,0 +1,28 @@
+name: Sira Yonetimi Otomatik Test Sistemi
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Kodlari GitHub'dan Cek
+        uses: actions/checkout@v3
+
+      - name: Docker Sistemini Ayaga Kaldir
+        run: docker-compose up -d
+
+      - name: Django Unit Testlerini Calistir
+        run: |
+          # Django konteynerinin icinde testleri kosturuyoruz
+          docker exec django_app python manage.py test api --settings=sira_yonetimi_proje.settings
+
+      - name: Sistem Durumu Kontrolu
+        run: |
+          docker ps
+          docker compose logs --tail 20 web

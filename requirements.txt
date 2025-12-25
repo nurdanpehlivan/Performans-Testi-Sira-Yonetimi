@@ -1,0 +1,11 @@
+Django 
+psycopg2-binary 
+redis 
+celery 
+django-storages
+gunicorn
+djangorestframework
+django-celery-results
+clamd
+django-cors-headers
+boto3

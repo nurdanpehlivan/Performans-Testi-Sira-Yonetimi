@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # 1. DJANGO BACKEND SERVİSİ (WEB)
+  web:
+    build:
+      context: .
+    container_name: django_app
+    # KRİTİK DÜZELTME YAPILDI
+    command: sh -c "DJANGO_SETTINGS_MODULE=sira_yonetimi_proje.settings gunicorn sira_yonetimi_proje.wsgi:application --bind 0.0.0.0:8000 --timeout 120 --workers 3"
+    volumes: 
+    - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1  # KRİTİK: Logların anlık düşmesini sağlar
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+
+  # 2. POSTGRES VERİTABANI SERVİSİ (DB)
+  db:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+
+  # 3. REDIS KUYRUK SERVİSİ (QUEUE BROKER)
+  redis:
+    image: redis:7-alpine
+    container_name: redis_broker
+    ports:
+      - "6379:6379"
+
+  # 4. CELERY İŞLEYİCİ SERVİSİ (WORKER)
+  worker:
+    build:
+      context: .
+    container_name: celery_worker
+    command: celery -A sira_yonetimi_proje worker --loglevel=info
+    # volumes: - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+      
+  # 5. MİNİO S3 SİMÜLASYONU (STORAGE)
+  minio:
+    image: minio/minio
+    container_name: minio_storage
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minio_admin
+      MINIO_ROOT_PASSWORD: minio_password
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+  # 6. K6 PERFORMANS TEST RUNNER (TEST)
+  k6:
+    image: grafana/k6
+    container_name: k6_runner
+    volumes:
+      - "C:/sira-yonetimi-performans-testi/k6_tests:/scripts"
+    command: tail -f /dev/null
+    depends_on:
+      - web
+  clamav_service:
+    image: clamav/clamav:latest
+    container_name: clamav_service
+    restart: always
+
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  app-network:
+    driver: bridge
