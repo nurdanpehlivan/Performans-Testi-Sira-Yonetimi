@@ -72,7 +72,7 @@ services:
     image: grafana/k6
     container_name: k6_runner
     volumes:
-      - "C:/sira-yonetimi-performans-testi/k6_tests:/scripts"
+      - ./k6_tests:/scripts
     command: tail -f /dev/null
     depends_on:
       - web
