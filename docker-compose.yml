@@ -87,6 +87,20 @@ services:
       - "80:80"
     volumes:
       - ./frontend:/usr/share/nginx/html
+      
+  # 9. MINIO BUCKET OLUŞTURUCU (AUTO-CONFIG)
+  createbuckets:
+    image: minio/mc
+    container_name: minio_setup
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set local http://minio:9000 minio_admin minio_password) do echo 'MinIO bekleniyor...' && sleep 1; done;
+      /usr/bin/mc mb local/bilet-evraklari --ignore-existing;
+      echo 'Bucket bilet-evraklari başarıyla hazırlandı.';
+      exit 0;
+      "
 volumes:
   postgres_data:
   minio_data:
