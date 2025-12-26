@@ -17,6 +17,10 @@ jobs:
       - name: Docker Sistemini Ayaga Kaldir
         run: docker compose up -d
 
+        # Veritabanının ve diğer servislerin tamamen hazır olması için bekleme ekliyoruz
+      - name: Servislerin Hazir Olmasini Bekle
+        run: sleep 15
+        
       - name: Django Unit Testlerini Calistir
         run: |
           # Django konteynerinin icinde testleri kosturuyoruz
