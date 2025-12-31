@@ -9,4 +9,4 @@ class Ticket(models.Model):
     number = models.IntegerField()
     service_type = models.CharField(max_length=20, choices=SERVICE_CHOICES, default='GENEL')
     created_at = models.DateTimeField(auto_now_add=True)
-    file_path = models.CharField(max_length=255, null=True, blank=True) # S3/MinIO için
+    file_path = models.TextField(null=True, blank=True)
